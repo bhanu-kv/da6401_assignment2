@@ -1,1 +1,3 @@
 inaturalist_12K/
+__pycache_/
+wandb/

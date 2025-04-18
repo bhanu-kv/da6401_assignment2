@@ -42,6 +42,7 @@ class CNN_Model(nn.Module):
             'ELU': nn.ELU,
             'SELU': nn.SELU,
             'CELU': nn.CELU,
+            'SiLU': nn.SiLU,
             'GELU': nn.GELU,
             'Mish': nn.Mish,
             'Sigmoid': nn.Sigmoid,

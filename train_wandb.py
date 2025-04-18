@@ -1,10 +1,12 @@
-from loss import *
 import wandb
 import matplotlib.pyplot as plt
-from tensorflow.keras.datasets import fashion_mnist
+import torch
 import wandb
-from nn import *
-import argparse
+from torch import nn
+from model import CNN_Model
+from dataloader import SimpleSplitLoader
+from helper_functions import calculate_accuracy
+from tqdm.auto import tqdm
 
 def train_step(model, train_loader, loss_fn, optimizer, device):
     train_loss = 0
@@ -39,7 +41,7 @@ def train_step(model, train_loader, loss_fn, optimizer, device):
     train_acc*=100
 
     print(f"Train loss: {train_loss:.5f} | Train accuracy: {train_acc:.2f}%")
-    wandb.log({"val_acc": acc, "val_loss": loss})
+    wandb.log({"val_acc": train_acc, "val_loss": train_loss})
     return train_loss, train_acc
 
 def test_step(model, dataloader, loss_fn, best_valid_loss, device, testing, train_data = False, valid_data = False):
@@ -88,6 +90,8 @@ def test_step(model, dataloader, loss_fn, best_valid_loss, device, testing, trai
     return loss, acc
   
 def train_wandb(config = None):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     loader = SimpleSplitLoader(
         train_dir="./inaturalist_12K/inaturalist_12K/train",
         test_dir="./inaturalist_12K/inaturalist_12K/val",
@@ -102,17 +106,51 @@ def train_wandb(config = None):
     run = wandb.init(config=config, resume="allow")
     config = wandb.config
     
-    name = f'hl_{config.hidden_layers}_bs_{config.batch_size}_acf_{config.activation_func}_lr_{config.learning_rate}_opt_{config.optimizer}_w_init_{config.weight_init}_wdecay_{config.weight_decay}'
+    name = f'fl_{config.num_filters}_bs_{config.batch_size}_acf_{config.activation}_aug_{config.augmentation}_norm_{config.batchnorm}_dropout_{config.dropout}'
     wandb.run.name = name
     wandb.run.save()
+    conv_layers_config = []
+
+    conv_layers_config.append({
+            'in_channels': 3,
+            'out_channels': config.num_filters,
+            'kernel_size': config.kernel_size,
+            'stride': config.stride,
+            'padding': config.padding,
+            'activation': config.activation,
+            'pooling': {'type': config.pool, 'kernel_size': 1, 'stride': 1}
+        })
+    
+    curr_kernel_size = config.kernel_size
+    mult_factor = 1
+    if config.fil_org == 'inc': mult_factor = 2
+    elif config.fil_org == 'dec': mult_factor = 0.5
+    else: mult_factor = 1
+
+    for i in range(config.num_layers-1):
+        conv_layers_config.append({
+            'in_channels': curr_kernel_size,
+            'out_channels': curr_kernel_size*mult_factor,
+            'kernel_size': config.kernel_size,
+            'stride': config.stride,
+            'padding': config.padding,
+            'activation': config.activation,
+            'pooling': {'type': config.pool, 'kernel_size': 1, 'stride': 1}
+        })
+
+        curr_kernel_size*mult_factor
+
+    fc_layers_config = [
+        {'out_features': config.hidden_neurons, 'activation': config.activation},
+    ]
 
     model = CNN_Model(
         conv_layers_config=conv_layers_config,
         fc_layers_config=fc_layers_config,
         input_shape=(3, 224, 224),
-        batch_norm=True,
-        conv_dropout=0.1,
-        fc_dropout=0.1,
+        batch_norm=config.batchnorm,
+        conv_dropout=config.dropout,
+        fc_dropout=config.dropout,
         output_classes=10,
         use_softmax=False  # Use CrossEntropyLoss
     ).to(device)
@@ -129,9 +167,7 @@ def train_wandb(config = None):
 
     best_valid_loss = float('inf')
 
-    epochs = 15
-
-    for epoch in tqdm(range(epochs)):
+    for epoch in tqdm(range(config.epochs)):
 
         print(f"Epoch: {epoch+1}\n---------")
 
@@ -160,35 +196,28 @@ project_name = 'DA6401 - Assignment2'
 entity = 'CE21B031'
 
 def main():
-    parser = argparse.ArgumentParser(description="Train a Neural Network with WandB Sweeps")
-    parser.add_argument("-wp", "--wandb_project", default="myprojectname", help="Project name for WandB")
-    parser.add_argument("-we", "--wandb_entity", default="myname", help="WandB entity")
-    parser.add_argument("-d", "--dataset", choices=["mnist", "fashion_mnist"], default="fashion_mnist")
-    parser.add_argument("-e", "--epochs", type=int, default=1, help="Number of training epochs")
-    parser.add_argument("-b", "--batch_size", type=int, default=4, help="Batch size")
-    parser.add_argument("-l", "--loss", choices=["mean_squared_error", "cross_entropy"], default="cross_entropy")
-    parser.add_argument("-o", "--optimizer", choices=["sgd", "momentum", "nag", "rmsprop", "adam", "nadam"], default="sgd")
-    parser.add_argument("-lr", "--learning_rate", type=float, default=0.1)
-    parser.add_argument("-m", "--momentum", type=float, default=0.5)
-    parser.add_argument("-beta", "--beta", type=float, default=0.5)
-    parser.add_argument("-beta1", "--beta1", type=float, default=0.5)
-    parser.add_argument("-beta2", "--beta2", type=float, default=0.5)
-    parser.add_argument("-eps", "--epsilon", type=float, default=1e-6)
-    parser.add_argument("-w_d", "--weight_decay", type=float, default=0.0)
-    parser.add_argument("-w_i", "--weight_init", choices=["random", "Xavier"], default="random")
-    parser.add_argument("-nhl", "--num_layers", type=int, default=1)
-    parser.add_argument("-sz", "--hidden_size", type=int, default=4)
-    parser.add_argument("-a", "--activation", choices=["identity", "sigmoid", "tanh", "ReLU"], default="sigmoid")
-    
-    args = parser.parse_args()
-    
     sweep_config = {
         'method': 'bayes',
         'metric': {'name': 'val_acc', 'goal': 'maximize'},
-        'parameters': vars(args)
+        'parameters': {
+            'batch_size': {'values': [32]},
+            'num_layers': {'values': [5]},
+            'num_filters': {'values': [32, 64, 128]},
+            'kernel_size': {'values': [3]},
+            'epochs': {'values': [30]},
+            'stride': {'values': [2]},
+            'padding': {'values': [2]},
+            'dropout': {'values': [0.2, 0.3]},
+            'fil_org': {'values': ['inc', 'dec', 'const']},
+            'pool': {'values': ['Max']},
+            'hidden_neurons': {'values': [512]},
+            'activation': {'values': ["ReLU", "Mish", "GELU", "SiLU"]},
+            'batchnorm': {'values': [True, False]},
+            'augmentation': {'values': [True, False]}
+        }
     }
-    
-    sweep_id = wandb.sweep(sweep_config, project=args.wandb_project, entity=args.wandb_entity)
+
+    sweep_id = wandb.sweep(sweep_config, project=project_name, entity=entity)
     wandb.agent(sweep_id, function=train_wandb)
 
 if __name__ == "__main__":
