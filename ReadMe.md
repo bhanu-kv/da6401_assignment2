@@ -1,6 +1,6 @@
 # DA6401 - Assignment 2: CNNs from Scratch & Transfer Learning
 
-[Project Report on Weights & Biases](https://wandb.ai/ce21b031/DA6401%20-%20Assignment2/reports/DA6401-Assignment-2--VmlldzoxMjM2NDU1NQ)
+[Project Report on Weights & Biases](https://api.wandb.ai/links/ce21b031/m0kkbkdp)
 
 This repository contains two major parts:
 
