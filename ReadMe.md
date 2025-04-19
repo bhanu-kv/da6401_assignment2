@@ -1,5 +1,7 @@
 # DA6401 - Assignment 2: CNNs from Scratch & Transfer Learning
 
+[Project Report on Weights & Biases](https://wandb.ai/ce21b031/DA6401%20-%20Assignment2/reports/DA6401-Assignment-2--VmlldzoxMjM2NDU1NQ)
+
 This repository contains two major parts:
 
 - **Part A:** Build, train, and evaluate a custom CNN on the iNaturalist dataset, with full hyperparameter sweep and command-line configurability.
@@ -189,4 +191,3 @@ pip install torch torchvision wandb matplotlib tqdm
 - For custom experiments, modify or extend the sweep configuration or model architecture as needed.
 
 ---
-```
