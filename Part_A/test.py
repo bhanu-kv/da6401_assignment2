@@ -69,76 +69,76 @@ def test_wandb(config = None):
         use_softmax=False  # Use CrossEntropyLoss
     ).to(device)
 
-    # cross_en_loss = nn.CrossEntropyLoss().to(device)
-    # Adam = torch.optim.Adam(params=model.parameters(), lr=0.001)
+    cross_en_loss = nn.CrossEntropyLoss().to(device)
+    Adam = torch.optim.Adam(params=model.parameters(), lr=0.001)
 
 
-    # train_loss_prg = []
-    # valid_loss_prg = []
+    train_loss_prg = []
+    valid_loss_prg = []
 
-    # train_acc_prg = []
-    # valid_acc_prg = []
+    train_acc_prg = []
+    valid_acc_prg = []
 
-    # best_valid_loss = float('inf')
+    best_valid_loss = float('inf')
 
-    # for epoch in tqdm(range(30)):
+    for epoch in tqdm(range(30)):
 
-    #     print(f"Epoch: {epoch+1}\n---------")
+        print(f"Epoch: {epoch+1}\n---------")
 
-    #     train_loss, train_acc = train_step(train_loader=train_loader,
-    #             model=model,
-    #             loss_fn=cross_en_loss,
-    #             device=device,
-    #             optimizer=Adam
-    #     )
-    #     train_loss_prg.append(train_loss.detach().cpu().numpy())
-    #     train_acc_prg.append(train_acc.detach().cpu().numpy())
+        train_loss, train_acc = train_step(train_loader=train_loader,
+                model=model,
+                loss_fn=cross_en_loss,
+                device=device,
+                optimizer=Adam
+        )
+        train_loss_prg.append(train_loss.detach().cpu().numpy())
+        train_acc_prg.append(train_acc.detach().cpu().numpy())
 
-    #     valid_loss, valid_acc = test_step(dataloader=val_loader,
-    #             model=model,
-    #             loss_fn=cross_en_loss,
-    #             best_valid_loss = best_valid_loss,
-    #             device=device,
-    #             testing = False
-    #     )
-    #     valid_loss_prg.append(valid_loss)
-    #     valid_acc_prg.append(valid_acc)
+        valid_loss, valid_acc = test_step(dataloader=val_loader,
+                model=model,
+                loss_fn=cross_en_loss,
+                best_valid_loss = best_valid_loss,
+                device=device,
+                testing = False
+        )
+        valid_loss_prg.append(valid_loss)
+        valid_acc_prg.append(valid_acc)
 
     model.load_state_dict(torch.load('parta.pt'))
 
-    # print("Training Data Loss and Accuracy:")
+    print("Training Data Loss and Accuracy:")
 
-    # train_loss, train_acc = test_step(dataloader=train_loader,
-    #                                 model=model,
-    #                                 loss_fn=cross_en_loss,
-    #                                 best_valid_loss = best_valid_loss,
-    #                                 device=device,
-    #                                 testing =True,
-    #                                 train_data=True
-    #                             )
+    train_loss, train_acc = test_step(dataloader=train_loader,
+                                    model=model,
+                                    loss_fn=cross_en_loss,
+                                    best_valid_loss = best_valid_loss,
+                                    device=device,
+                                    testing =True,
+                                    train_data=True
+                                )
 
-    # print()
-    # print("Validation Data Loss and Accuracy:")
+    print()
+    print("Validation Data Loss and Accuracy:")
 
-    # train_loss, train_acc = test_step(dataloader=val_loader,
-    #                                 model=model,
-    #                                 loss_fn=cross_en_loss,
-    #                                 best_valid_loss = best_valid_loss,
-    #                                 device=device,
-    #                                 testing =True,
-    #                                 valid_data=True
-    #                             )
+    train_loss, train_acc = test_step(dataloader=val_loader,
+                                    model=model,
+                                    loss_fn=cross_en_loss,
+                                    best_valid_loss = best_valid_loss,
+                                    device=device,
+                                    testing =True,
+                                    valid_data=True
+                                )
 
-    # print()
-    # print("Testing Data Loss and Accuracy:")
+    print()
+    print("Testing Data Loss and Accuracy:")
 
-    # train_loss, train_acc = test_step(dataloader=test_loader,
-    #                                 model=model,
-    #                                 loss_fn=cross_en_loss,
-    #                                 best_valid_loss = best_valid_loss,
-    #                                 device=device,
-    #                                 testing =True
-    #                             )
+    train_loss, train_acc = test_step(dataloader=test_loader,
+                                    model=model,
+                                    loss_fn=cross_en_loss,
+                                    best_valid_loss = best_valid_loss,
+                                    device=device,
+                                    testing =True
+                                )
     
     N_IMAGES = 30
     images, labels, pred_labels = predict(model, test_loader, device)
