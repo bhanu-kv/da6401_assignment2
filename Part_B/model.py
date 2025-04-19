@@ -8,46 +8,44 @@ def get_model(num_classes=10):
     weights = ResNet50_Weights.IMAGENET1K_V2
     model = resnet50(weights=weights)
     model.fc = nn.Linear(model.fc.in_features, num_classes)
-    return model, weights.transforms()
+        
+    # Replace and unfreeze final FC layer
+    for param in model.fc.parameters():
+        param.requires_grad = True
+        
+    return model, weights.transforms()  
 
-# Strategy 1: Freeze all except final layer
+# Freeze all except final layer
 def freeze_base():
     model, preprocess = get_model()
     
     # Freeze base network
     for param in model.parameters():
         param.requires_grad = False
-    model.fc.weight.requires_grad = True
+    
+    # Unfreeze FC layer
+    for param in model.fc.parameters():
+        param.requires_grad = True
     
     optimizer = optim.Adam(model.fc.parameters(), lr=3e-4)
     return model, optimizer
 
-# Strategy 2: Progressive unfreezing
+# Progressive unfreezing
 def progressive_unfreeze():
     model, preprocess = get_model()
     
     # Phase 1: Train only FC
     for param in model.parameters():
         param.requires_grad = False
-    model.fc.requires_grad = True
+    
+    for param in model.fc.parameters():
+        param.requires_grad = True
+
     optimizer = optim.Adam(model.fc.parameters(), lr=3e-4)
-    
-    # After 5 epochs, unfreeze final block
-    # optimizer = optim.Adam([
-    #     {'params': model.fc.parameters(), 'lr': 3e-4},
-    #     {'params': model.layer4.parameters(), 'lr': 1e-5}
-    # ])
-    
-    # After 10 epochs, unfreeze penultimate block
-    # optimizer = optim.Adam([
-    #     {'params': model.fc.parameters(), 'lr': 3e-4},
-    #     {'params': model.layer4.parameters(), 'lr': 1e-5},
-    #     {'params': model.layer3.parameters(), 'lr': 1e-6}
-    # ])
     
     return model, optimizer
 
-# Strategy 3: Differential learning rates
+# Differential learning rates
 def differential_lr():
     model, preprocess = get_model()
     

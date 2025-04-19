@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
+
 import wandb
 import matplotlib.pyplot as plt
 import torch
@@ -9,6 +15,7 @@ from helper_functions import calculate_accuracy
 from tqdm.auto import tqdm
 import os
 from train_helpers import test_step, train_step
+
 
 def train_wandb(config = None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

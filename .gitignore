@@ -1,3 +1,10 @@
 inaturalist_12K/
 __pycache_/
 wandb/
+Part_A/__pycache_/
+Part_B/__pycache_/
+Part_A/wandb/
+Part_B/wandb/
+Part_A/parta.pt
+Part_A/test_results.png
+Part_B/partb.pt
