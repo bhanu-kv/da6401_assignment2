@@ -38,6 +38,7 @@ class SimpleSplitLoader:
 
         # Load full train dataset (no transform yet)
         full_train = ImageFolder(train_dir)
+        self.class_names = full_train.classes
 
         # Split into train/val
         n_total = len(full_train)
@@ -83,22 +84,3 @@ def imshow(inp, title=None):
     if title is not None:
         plt.title(title)
     plt.pause(0.001)
-
-# loader = SimpleSplitLoader(
-#         train_dir="./inaturalist_12K/inaturalist_12K/train",
-#         test_dir="./inaturalist_12K/inaturalist_12K/val",
-#         image_size=(224, 224),
-#         batch_size=32,
-#         val_ratio=0.2,
-#         augment=True,
-#         num_workers=2
-#     )
-# train_loader, val_loader, test_loader = loader.get_loaders()
-
-
-# # Get a batch of training data
-# inputs, classes = next(iter(train_loader))
-# print(classes)
-# out = torchvision.utils.make_grid(inputs[:4])
-# imshow(out, title="Sample Training Images")
-# plt.show()
